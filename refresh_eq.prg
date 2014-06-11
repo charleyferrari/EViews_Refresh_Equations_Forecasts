@@ -1,6 +1,6 @@
 logmode +addin
 
-%eqlist=@wlookup("*","equation")   'make a list of all equations in workfile %eqlist
+%eqlist=@wlookup("*","equation")   'make a list of all equations in workfile
 !ownsmpl = 1
 
 !result = @uidialog("caption","Equation refresh","edit",%eqlist,"Enter a list of equations to re-estimate",10000,"check",!ownsmpl,"Use original equation sample?")
@@ -46,6 +46,23 @@ for !i=1 to @wcount(%eqlist)     'cycle through the list one at a time
 		%eqerr = ""
 		{%errstorage}(!i) = %eqerr		
 	endif
+
+	%depVar = @word({%eq}.@varlist,1) 'sets %depVar as the dependent variable for the current equation
+	%foreVar = %depVar+"E" 'sets %foreVar as the forecasted variable name
+	'check if forecasted variable is an object in the workfile
+	if @isobject(%foreVar) = 0 then
+		%msg = %foreVar + " is not a valid object."
+		@uiprompt(%msg)
+		stop
+	endif
+	'check that this object is a series
+	if {%foreVar}.@type<>"SERIES" then
+		@uiprompt("Procedure can only be run from an Equation object")
+		stop
+	endif	
+	delete {%foreVar}
+	{%eq}.forecast {%foreVar}
+
 next
 !n = @rows({%errstorage})
 
